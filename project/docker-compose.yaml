@@ -1,0 +1,10 @@
+version: '3'
+services:
+  proxy_server:
+    build: .
+    container_name: llama_proxy
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    restart: always
