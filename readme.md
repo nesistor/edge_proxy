@@ -1,7 +1,7 @@
 
 # LLama proxy.
 
-This proxy implement llama on edge devices to save energy.
+This project uses Redis to store web requests and responses, and employs the LLaMA model to set the TTL for infrequent requests.
 
 
 ## Run Locally
