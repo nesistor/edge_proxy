@@ -27,8 +27,11 @@ logs:
 	@echo "Showing logs for proxy server..."
 	docker-compose logs -f proxy_server
 
-## build: manually builds the Docker image
-build_llama_proxy:
-	@echo "Building Docker image for proxy server..."
-	docker-compose build proxy_server
+build_go_proxy:
+	@echo "Building go-proxy binary..."
+	cd ../go-proxy && env GOOS=linux CGO_ENABLED=0 go build -o edgeProxy ./cmd/api
 	@echo "Done!"
+
+## build: manually builds the Docker image
+build_llama_service:
+	
