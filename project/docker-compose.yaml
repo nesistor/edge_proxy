@@ -1,13 +1,14 @@
 services:
   proxy:
-    build: ../go-proxy/go-proxy.dockerfile
+    context: ./../go-proxy
+    build: ./../go-proxy/go-proxy.dockerfile
     ports:
-      - "8080:8080"  # Mapowanie portu hosta na port kontenera
+      - "8080:8080"  
     environment:
       - SERVER_PORT=8080
-      - REDIS_ADDR=redis:6379  # Redis zdefiniowany w tej samej sieci
+      - REDIS_ADDR=redis:6379  
     depends_on:
-      - redis  # Serwer proxy musi poczekać na uruchomienie Redisa
+      - redis  
 
   redis:
     image: "redis:6.2-alpine"

@@ -29,7 +29,7 @@ logs:
 
 build_go_proxy:
 	@echo "Building go-proxy binary..."
-	cd ../go-proxy && env GOOS=linux CGO_ENABLED=0 go build -o edgeProxy ./cmd/api
+	cd ../go-proxy && env GOOS=linux CGO_ENABLED=0 go build -o edgeProxy ./cmd/proxy
 	@echo "Done!"
 
 ## build: manually builds the Docker image
