@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// ExecuteAndUpdateRequest - funkcja wykonująca request i aktualizująca pola w Redis
+// ExecuteAndUpdateRequest...
 func ExecuteAndUpdateRequest(cacheKey string) error {
 	// Sprawdzenie, czy wpis w Redisie ma pole "purpose" ustawione na "refresh"
 	data, err := cache.RedisClient.HGetAll(context.Background(), cacheKey).Result()
