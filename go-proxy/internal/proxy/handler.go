@@ -1,15 +1,29 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"go-proxy/internal/cache"
 	"io"
 	"net/http"
-	"time"
 )
 
 // ProxyHandler - główny handler obsługujący proxy
 func ProxyHandler(w http.ResponseWriter, r *http.Request) {
+	// Klucz do cache na podstawie ścieżki zapytania
+	cacheKey := fmt.Sprintf("proxy:%s", r.URL.Path)
+
+	// Sprawdzanie czy odpowiedź znajduje się w cache
+	cachedResponse, err := cache.RedisClient.HGetAll(cache.GetContext(), cacheKey).Result()
+	if err == nil && len(cachedResponse) > 0 {
+		// Jeśli znaleziono w cache, zwracamy odpowiedź z cache
+		w.Header().Set("Content-Type", "application/json") // Możesz dostosować nagłówki jeśli potrzebne
+		w.Write([]byte(cachedResponse["response"]))
+		return
+	}
+
+	// Jeśli nie ma w cache, kontynuujemy zapytanie do serwera
+
 	// Docelowy adres serwera (np. zmień na rzeczywisty serwer)
 	targetURL := "http://httpbin.org" + r.URL.Path
 
@@ -43,9 +57,10 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Zapisanie żądania i odpowiedzi do Redis z czasem wygaśnięcia
-	cacheKey := fmt.Sprintf("proxy:%s:%d", r.URL.Path, time.Now().Unix())
-	err = cache.RedisClient.HSet(cache.GetContext(), cacheKey, "request", r.URL.String(), "response", string(body)).Err()
+	purpose := "empty"
+
+	// Zapisanie żądania, odpowiedzi i przeznaczenia do Redis bez TTL (na stałe)
+	err = cache.RedisClient.HSet(context.Background(), cacheKey, "request", r.URL.String(), "response", string(body), "purpose", purpose).Err()
 	if err != nil {
 		http.Error(w, "Error saving data to Redis", http.StatusInternalServerError)
 		return
