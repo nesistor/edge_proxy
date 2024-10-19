@@ -15,7 +15,7 @@ Clone the project
 Go to the project directory
 
 ```bash
-  cd llama_proxy
+  cd project
 ```
 
 Start the server
