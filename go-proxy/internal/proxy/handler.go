@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// ProxyHandler - główny handler obsługujący proxy
+// ProxyHandler ...
 func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 	// Klucz do cache na podstawie ścieżki zapytania
 	cacheKey := fmt.Sprintf("proxy:%s", r.URL.Path)
