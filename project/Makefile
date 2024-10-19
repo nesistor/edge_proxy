@@ -5,7 +5,7 @@ up:
 	@echo "Docker images started!"
 
 ## up_build: stops docker-compose, builds all projects and starts docker compose
-up_build: 
+up_build: build_go_proxy
 	@echo "Stopping docker images"
 	docker-compose down
 	@echo "Building and starting docker images..."
@@ -27,11 +27,9 @@ logs:
 	@echo "Showing logs for proxy server..."
 	docker-compose logs -f proxy_server
 
+## build_go_proxy: builds the edgeProxy binary as a linux executable
 build_go_proxy:
 	@echo "Building go-proxy binary..."
 	cd ../go-proxy && env GOOS=linux CGO_ENABLED=0 go build -o edgeProxy ./cmd/proxy
 	@echo "Done!"
 
-## build: manually builds the Docker image
-build_llama_service:
-	
