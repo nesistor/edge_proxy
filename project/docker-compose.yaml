@@ -1,7 +1,10 @@
+version: '3.8'
+
 services:
   proxy:
-    context: ./../go-proxy
-    build: ./../go-proxy/go-proxy.dockerfile
+    build:
+      context: ./../go-proxy
+      dockerfile: go-proxy.dockerfile
     ports:
       - "8080:8080"  
     environment:
@@ -13,10 +16,10 @@ services:
   redis:
     image: "redis:6.2-alpine"
     ports:
-      - "6379:6379"  # Port dla Redisa
-    command: ["redis-server", "--appendonly", "yes"]  # Użycie trwałego zapisu danych
+      - "6379:6379"  
+    command: ["redis-server", "--appendonly", "yes"]  
     volumes:
-      - redis_data:/data  # Trwałe przechowywanie danych w Redis
+      - redis_data:/data  
 
 volumes:
   redis_data:

@@ -30,6 +30,6 @@ logs:
 ## build_go_proxy: builds the edgeProxy binary as a linux executable
 build_go_proxy:
 	@echo "Building go-proxy binary..."
-	cd ../go-proxy && env GOOS=linux CGO_ENABLED=0 go build -o edgeProxy ./cmd/proxy
+	cd ../go-proxy && env GOOS=linux CGO_ENABLED=0 go build -o proxyApp ./cmd/proxy
 	@echo "Done!"
 
