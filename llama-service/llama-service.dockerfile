@@ -10,4 +10,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Komenda startowa
-CMD ["python", "scripts/analyze_requests.py"]
+CMD ["python", "llama_analysis.py"]
