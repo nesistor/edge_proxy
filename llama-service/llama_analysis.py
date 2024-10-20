@@ -14,14 +14,43 @@ class LlamaModel:
         )
 
     def analyze_request(self, request_data):
-        # Analyze the request using LLaMA
+        # Enhanced conversation for intelligent analysis
         conversation = [
-            {"role": "system", "content": "You are a request analysis assistant. Based on the request data, return one of three options: 'delete' to remove the request, 'refresh' to mark it for refreshing, or 'keep' to keep it as is."},
-            {"role": "user", "content": f"Analyze the following request: {request_data}"}
+            {
+                "role": "system",
+                "content": (
+                    "You are a request analysis assistant. "
+                    "Based on the provided request data, analyze the following parameters: "
+                    "- request_method (GET, POST, etc.) "
+                    "- request_url (the URL being requested) "
+                    "- request_headers (relevant headers, such as User-Agent) "
+                    "- response (the expected or previous response) "
+                    "- purpose (current purpose of the request) "
+                    "- request_count (the number of times this request has been made) "
+                    "If the request is repeated (request_count > 1), it should be considered for deletion. "
+                    "If a POST request has been made to the same URL previously, it should be marked for refreshing. "
+                    "Return one of the following options: 'delete' to remove the request, "
+                    "'refresh' to mark it for refreshing, or 'keep' to keep it as is."
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Analyze the following request data:\n"
+                    f"Request Method: {request_data['request_method']}\n"
+                    f"Request URL: {request_data['request_url']}\n"
+                    f"Request Headers: {request_data['request_headers']}\n"
+                    f"Response: {request_data['response']}\n"
+                    f"Current Purpose: {request_data.get('purpose', 'unknown')}\n"
+                    f"Request Count: {request_data.get('request_count', 0)}\n"
+                    "Please provide a recommendation based on this analysis."
+                )
+            }
         ]
+        
         output = self.pipe(conversation, max_new_tokens=150)
         analysis_result = output[0]['generated_text']
-        
+    
         # Return a decision based on LLaMA's response
         if 'delete' in analysis_result.lower():
             return 'delete'
@@ -29,7 +58,7 @@ class LlamaModel:
             return 'refresh'
         else:
             return 'keep'
-
+    
     def compare_urls(self, url1, url2):
         # LLaMA analyzes the similarity of URLs
         conversation = [
@@ -38,7 +67,7 @@ class LlamaModel:
         ]
         output = self.pipe(conversation, max_new_tokens=50)
         result = output[0]['generated_text']
-        
+
         # We assume the model returns 'True' or 'False'
         return 'true' in result.lower()
 
@@ -54,7 +83,7 @@ class RequestAnalyzer:
 
         for key in keys:
             request_data = self.redis.get_request_data(key)
-            
+
             # Analyze the request using LLaMA
             action = self.llama.analyze_request(request_data)
 
@@ -80,7 +109,7 @@ class RequestAnalyzer:
                 print(f"POST request detected: {key}. Deleting old related requests and marking related GET requests as 'refresh'.")
                 self.delete_old_requests(request_data["request_url"])
                 self.delete_old_duplicate_requests(request_data["request_url"])
-                
+
                 # Mark GET requests with a similar URL as "refresh"
                 self.mark_related_get_as_refresh(request_data["request_url"])
 
