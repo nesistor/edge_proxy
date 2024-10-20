@@ -14,54 +14,61 @@ class LlamaModel:
         )
 
     def analyze_request(self, request_data):
-        # Enhanced conversation for intelligent analysis
-        conversation = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a request analysis assistant. "
-                    "Based on the provided request data, analyze the following parameters: "
-                    "- request_method (GET, POST, etc.) "
-                    "- request_url (the URL being requested) "
-                    "- request_headers (relevant headers, such as User-Agent) "
-                    "- response (the expected or previous response) "
-                    "- purpose (current purpose of the request) "
-                    "- request_count (the number of times this request has been made) "
-                    "If the request is repeated (request_count > 1), it should be considered for deletion. "
-                    "If a POST request has been made to the same URL previously, it should be marked for refreshing. "
-                    "Return one of the following options: 'delete' to remove the request, "
-                    "'refresh' to mark it for refreshing, or 'keep' to keep it as is."
-                )
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Analyze the following request data:\n"
-                    f"Request Method: {request_data['request_method']}\n"
-                    f"Request URL: {request_data['request_url']}\n"
-                    f"Request Headers: {request_data['request_headers']}\n"
-                    f"Response: {request_data['response']}\n"
-                    f"Current Purpose: {request_data.get('purpose', 'unknown')}\n"
-                    f"Request Count: {request_data.get('request_count', 0)}\n"
-                    "Please provide a recommendation based on this analysis."
-                )
-            }
-        ]
+    # Enhanced conversation for intelligent analysis
+    conversation = [
+        {
+            "role": "system",
+            "content": (
+                "You are a request analysis assistant. "
+                "Based on the provided request data, analyze the following parameters: "
+                "- request_method (GET, POST, etc.) "
+                "- request_url (the URL being requested) "
+                "- request_headers (relevant headers, such as User-Agent) "
+                "- response (the expected or previous response) "
+                "- purpose (current purpose of the request) "
+                "- request_count (the number of times this request has been made) "
+                "If the request is repeated (request_count > 1), it should be considered for deletion. "
+                "If a POST request has been made to the same URL previously, it should be marked for refreshing. "
+                "Additionally, assess the response data to determine if it contains dynamically changing information. "
+                "If the response contains dynamic data, automatically set the purpose to 'dynamic'. "
+                "Return one of the following options: 'delete' to remove the request, "
+                "'refresh' to mark it for refreshing, or 'keep' to keep it as is."
+            )
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Analyze the following request data:\n"
+                f"Request Method: {request_data['request_method']}\n"
+                f"Request URL: {request_data['request_url']}\n"
+                f"Request Headers: {request_data['request_headers']}\n"
+                f"Response: {request_data['response']}\n"
+                f"Current Purpose: {request_data.get('purpose', 'unknown')}\n"
+                f"Request Count: {request_data.get('request_count', 0)}\n"
+                "Please provide a recommendation based on this analysis."
+            )
+        }
+    ]
+
+    try:
+        output = self.pipe(conversation, max_new_tokens=150)
+        analysis_result = output[0]['generated_text'].strip().lower()  # Clean the output for comparison
+    except Exception as e:
+        print(f"Error during model inference: {e}")
+        return 'keep'  # Default action on error
+    
+    # Check if LLaMA suggests the data is dynamic
+    if 'dynamic' in analysis_result:
+        request_data['purpose'] = 'dynamic'
         
-        try:
-            output = self.pipe(conversation, max_new_tokens=150)
-            analysis_result = output[0]['generated_text'].strip().lower()  # Clean the output for comparison
-        except Exception as e:
-            print(f"Error during model inference: {e}")
-            return 'keep'  # Default action on error
-        
-        # Return a decision based on LLaMA's response
-        if 'delete' in analysis_result:
-            return 'delete'
-        elif 'refresh' in analysis_result:
-            return 'refresh'
-        else:
-            return 'keep'
+    # Return a decision based on LLaMA's response
+    if 'delete' in analysis_result:
+        return 'delete'
+    elif 'refresh' in analysis_result:
+        return 'refresh'
+    else:
+        return 'keep'
+
     
     def compare_urls(self, url1, url2):
         # LLaMA analyzes the similarity of URLs
