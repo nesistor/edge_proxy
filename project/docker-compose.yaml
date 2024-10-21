@@ -14,14 +14,16 @@ services:
       - redis  
 
   proxy-analyzer:
-    build: .
+    build:  
+      context: ./../llama-service
+      dockerfile: llama-service.dockerfile  
     environment:
       - REDIS_HOST=redis
     depends_on:
       - redis
     volumes:
       - .:/app
-    command: python scripts/analyze_requests.py
+    command: python llama-service.py
 
   redis:
     image: "redis:6.2-alpine"
@@ -32,4 +34,4 @@ services:
       - redis_data:/data  
 
 volumes:
-  redis_data:
+  redis_data: 

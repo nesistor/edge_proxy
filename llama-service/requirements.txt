@@ -2,4 +2,3 @@ torch
 transformers
 datasets
 redis
-threading
