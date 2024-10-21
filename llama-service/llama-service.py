@@ -5,42 +5,31 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingA
 from datasets import Dataset
 from redis_client import RedisClient
 
-# --------------- Training Model (LlamaTrainer) -----------------
 class LlamaTrainer:
     def __init__(self, model_id='meta-llama/Llama-3.2-1B-Instruct', redis_host='localhost', redis_port=6379, redis_db=0):
-        # Initialize model and tokenizer
         self.model = AutoModelForCausalLM.from_pretrained(
             model_id,
             torch_dtype=torch.bfloat16,
             device_map='auto'
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        # Connect to Redis
         self.redis = RedisClient(host=redis_host, port=redis_port, db=redis_db)
 
     def get_training_data(self):
-        """
-        Fetch data from Redis and prepare it for training the model.
-        """
         keys = self.redis.get_all_keys()
         data = []
 
         for key in keys:
             request_data = self.redis.get_request_data(key)
             if 'request_url' in request_data and 'response' in request_data:
-                # Use request_url and response as training data
                 input_text = f"Request URL: {request_data['request_url']}\nResponse: {request_data['response']}"
                 data.append(input_text)
 
         return data
 
     def prepare_dataset(self, data):
-        """
-        Prepare data in dataset format for training the model.
-        """
         dataset = Dataset.from_dict({"text": data})
 
-        # Tokenize the data
         def tokenize_function(examples):
             return self.tokenizer(examples["text"], padding="max_length", truncation=True, max_length=512)
 
@@ -48,9 +37,6 @@ class LlamaTrainer:
         return tokenized_dataset
 
     def fine_tune_model(self, tokenized_dataset):
-        """
-        Fine-tuning the model on the provided data.
-        """
         training_args = TrainingArguments(
             output_dir="./llama_finetuned",
             overwrite_output_dir=True,
@@ -76,9 +62,6 @@ class LlamaTrainer:
         trainer.train()
 
     def run_training(self):
-        """
-        Main function to fetch data, prepare it, and train the model.
-        """
         print("Fetching data from Redis...")
         data = self.get_training_data()
         if not data:
@@ -92,11 +75,11 @@ class LlamaTrainer:
         self.fine_tune_model(tokenized_dataset)
         print("Fine-tuning completed.")
 
-# --------------- Request Analysis (LlamaModel and RequestAnalyzer) -----------------
+    def update_cache(self, request_data):
+        self.redis.store_request_data(request_data)
 
 class LlamaModel:
     def __init__(self, model_id='meta-llama/Llama-3.2-1B-Instruct', guard_model_id="meta-llama/Llama-Guard-3-1B"):
-        # Load models and pipelines
         self.pipe = pipeline(
             'text-generation',
             model=model_id,
@@ -210,6 +193,9 @@ class RequestAnalyzer:
 
                 self.redis.increment_request_count(key)
 
+                # Update cache with the analyzed request data
+                self.llama.update_cache(request_data)
+
             except Exception as e:
                 print(f"Error analyzing request {key}: {e}")
 
@@ -239,14 +225,18 @@ class RequestAnalyzer:
         all_keys = self.redis.get_all_keys()
         for key in all_keys:
             request_data = self.redis.get_request_data(key)
-            if request_data["request_method"] == "GET" and self.llama.compare_urls(request_data["request_url"], request_url):
+            if request_data["request_method"] == "GET" and self.compare_urls(request_data["request_url"], request_url):
                 print(f"Marking GET request {key} as 'refresh' for URL {request_data['request_url']}")
                 self.redis.client.hset(key, "purpose", "refresh")
+
+    @staticmethod
+    def compare_urls(url1, url2):
+        return url1.lower() == url2.lower()  
 
     def run(self):
         while True:
             self.analyze_requests()
-            time.sleep(600)  # Run every 10 minutes
+            time.sleep(600)  
 
 # --------------- Multithreading Execution -----------------
 def run_trainer():
@@ -258,7 +248,6 @@ def run_analyzer():
     analyzer.run()
 
 if __name__ == "__main__":
-    # Run both trainer and analyzer in parallel threads
     trainer_thread = threading.Thread(target=run_trainer)
     analyzer_thread = threading.Thread(target=run_analyzer)
 
