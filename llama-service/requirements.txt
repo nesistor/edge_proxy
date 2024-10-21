@@ -1,3 +1,5 @@
-torch
-transformers
-redis
+torch>=2.0.0
+transformers>=4.30.0
+datasets>=2.13.0
+redis>=4.5.3
+threading
