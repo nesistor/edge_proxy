@@ -1,8 +1,7 @@
 
 # LLama proxy.
 
-This project uses Redis to store web requests and responses, and employs the LLaMA model to set the TTL for infrequent requests.
-
+This project operates as a proxy that analyzes web requests and responses, utilizing Redis to store this data efficiently. It employs the LLaMA model to intelligently set the Time-to-Live (TTL) for infrequent requests, ensuring optimal cache management. Furthermore, the application learns the structure of incoming requests, allowing it to autonomously retrieve current requests in the future and cache them in Redis for improved performance.
 
 ## Run Locally
 
